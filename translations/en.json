@@ -1,0 +1,20 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Openvfd setting",
+        "description": "",
+        "data": {
+        }
+      }
+    },
+    "error": {
+    },
+    "abort": {
+      "single_instance_allowed": "Only a single configuration is allowed.",
+      "Not found integration config": "Not found integration config."
+    }
+  },
+  "title": "Openvfd setting"
+
+}
