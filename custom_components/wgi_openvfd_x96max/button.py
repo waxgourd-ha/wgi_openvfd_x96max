@@ -36,11 +36,10 @@ async def async_setup_entry(
         async_add_entities: AddEntitiesCallback
 ):
     """async setup entry"""
-    _store = hass.data[DOMAIN]['store']
-    if 'device' in _store:
+    if 'device_info' in hass.data[DOMAIN]:
         await async_common_setup_entry(
             hass,
-            _store['device'],
+            hass.data[DOMAIN]['device_info'],
             entry,
             async_add_entities,
             ButtonEntityDescription,
@@ -60,13 +59,11 @@ class M2Button(WgiEntity, ButtonEntity, ABC):
 
     async def async_press(self) -> None:
         """Press the button."""
-        _LOGGER.warning(['async_press',self.entity_id,self._platform,self.state])
         entity_id_list = self.entity_id.split('.')
         if entity_id_list[1].startswith('openvfd_'):
             openvfd = OpenvfdButton(self.hass)
             await openvfd.press(self.entity_id, entity_id_list[1])
 
-        # await async_entity_send(self.hass, self.entity_id, self._platform, SERVICE_PRESS)
 
 class OpenvfdButton:
 

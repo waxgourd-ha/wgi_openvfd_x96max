@@ -36,11 +36,10 @@ async def async_setup_entry(
         async_add_entities: AddEntitiesCallback
 ):
     """async setup entry"""
-    _store = hass.data[DOMAIN]['store']
-    if 'device' in _store:
+    if 'device_info' in hass.data[DOMAIN]:
         await async_common_setup_entry(
             hass,
-            _store['device'],
+            hass.data[DOMAIN]['device_info'],
             entry,
             async_add_entities,
             SwitchEntityDescription,
@@ -73,7 +72,6 @@ class WgiSwitch(WgiEntity, SwitchEntity, ABC):
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn on"""
         self._attr_is_on = True
-        # await async_entity_send(self.hass, self.entity_id, self._platform, SERVICE_TURN_ON)
         entity_id_list = self.entity_id.split('.')
         if entity_id_list[1].startswith('openvfd_'):
             _openvfd_seitch = OpenvfdSwitch(self.hass)

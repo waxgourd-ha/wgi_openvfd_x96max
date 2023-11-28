@@ -1,4 +1,5 @@
 
+import os
 from enum import StrEnum
 from typing import Final
 
@@ -8,8 +9,9 @@ from datetime import timedelta
 DOMAIN: Final = "wgi_openvfd_x96max"
 
 DEFAULT_NAME: Final = "OpenVfd x96max"
+YAML_FILE_BASE = os.path.dirname(__file__)
 
-YAML_FILE = f"/config/custom_components/{DOMAIN}/config.yaml"
+YAML_FILE = f"{YAML_FILE_BASE}/config.yaml"
 
 class LedCommandName(StrEnum):
     """Led命令名称."""

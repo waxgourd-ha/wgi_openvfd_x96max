@@ -12,16 +12,12 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from .common import  (
     WgiEntity,
     async_common_setup_entry,
-    openvfd_check_server_from_shell,
-    EntityManage
 )
 
 
 from .const import (
     DOMAIN,
 )
-
-
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -32,11 +28,10 @@ async def async_setup_entry(
         async_add_entities: AddEntitiesCallback
 ):
     """async setup entry"""
-    _store = hass.data[DOMAIN]['store']
-    if 'device' in _store:
+    if 'device_info' in hass.data[DOMAIN]:
         await async_common_setup_entry(
             hass,
-            _store['device'],
+            hass.data[DOMAIN]['device_info'],
             entry,
             async_add_entities,
             SensorEntityDescription,

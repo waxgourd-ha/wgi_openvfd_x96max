@@ -2,12 +2,7 @@
 import os
 import logging
 import json
-import time
-import asyncio
-import dateutil
-from datetime import datetime
-import pytz
-from aiohttp import ClientTimeout
+
 from homeassistant.config import async_hass_config_yaml
 
 from homeassistant.helpers import (
@@ -17,10 +12,9 @@ from homeassistant.helpers import (
     entity_registry as er,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import ATTR_ENTITY_ID, Platform
+from homeassistant.const import  Platform
 from homeassistant.helpers.entity import Entity, EntityDescription
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-# from homeassistant import config_entries,loader
 from homeassistant.helpers.typing import Any, Mapping, StateType
 from homeassistant.util.file import write_utf8_file_atomic
 from homeassistant.util.yaml import dump, load_yaml
@@ -154,7 +148,6 @@ async def common_setup_entry(
         if entities is not None and len(entities) >0:
             for entitys in entities:
                 _platform = entitys.get('platform')
-                # _LOGGER.warning([_platform,platform_type])
                 if _platform != platform_type:
                     continue
 
@@ -472,7 +465,7 @@ class EntityManage:
 
     def get_entity(self, entity_id: str) -> dict:
         entity = {}
-        _devices = self._hass_data['store']['device']
+        _devices = self._hass_data['device_info']
         if len(_devices) > 0:
             for _device in _devices:
                 _entities = _device.get('entities')
@@ -509,8 +502,6 @@ class EntityManage:
         _entity = await self.async_get_entity(entity_id)
         if _entity:
             _entity[attr] = state
-            store_obj = StoreBase(self._hass)
-            await store_obj.async_save(self._hass_data['store'])
 
     async def get_update_server_api(self):
         self._api = ApiServer(self._hass)
@@ -557,7 +548,6 @@ class EntityManage:
 
 
     async def update_server_state(self,is_enable=1):
-        # _LOGGER.warning('update_server_state')
         if str(is_enable) == '1':
             await self.update_entity_state(f"switch.{OPENVFD_SERVER_CONTROL}")
             self.write_server('enable')
@@ -587,15 +577,8 @@ class EntityManage:
         self.write(time_zone)
 
     async def update_default_utc(self,time_zone: str) -> None:
-        _is_store_update = False
         _utc_val = await self.async_get_entity_attr(OPENVFD_TIME_ZONE_UTC_NAME)
 
         if time_zone != _utc_val:
-            _is_store_update = True
             await self.update_entity_state(OPENVFD_TIME_ZONE_UTC_NAME,'state',time_zone)
             self.write(time_zone)
-
-
-        if _is_store_update:
-            store_obj = StoreBase(self._hass)
-            await store_obj.async_save(self._hass_data['store'])

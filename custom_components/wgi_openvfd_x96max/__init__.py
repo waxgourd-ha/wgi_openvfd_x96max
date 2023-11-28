@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import logging
 
-from homeassistant.config_entries import ConfigType, ConfigEntry
+from homeassistant.config_entries import ConfigType, ConfigEntry,SOURCE_IMPORT
 from homeassistant.const import EVENT_CORE_CONFIG_UPDATE,Platform
 from homeassistant.core import HomeAssistant, callback, Event, State
 
@@ -16,10 +16,10 @@ from homeassistant.helpers import (
 
 from .const import (
     DOMAIN,
+    BASE_DEVICE_CONFIG,
     OPENVFD_SERVER_STATE_ENABLE,
 )
 from .common import (
-    StoreBase,
     EntityManage,
     yaml_read,
     YAML_FILE,
@@ -38,13 +38,13 @@ def new_entry_device(hass: HomeAssistant, device_info: dict, entry_id: str):
 
     device_registry = dr.async_get(hass)
     dev = device_registry.async_get_or_create(
-        # manufacturer=device_info.get('manufacturer'),
+        manufacturer=device_info.get('manufacturer'),
         # configuration_url=device_info.get('configuration_url'),
         identifiers={(DOMAIN, '{}'.format(device_info.get('id')))},
         config_entry_id=entry_id,
         # sw_version=device_info.get('sw_version'),
         # hw_version=device_info.get('hw_version'),
-        # model=device_info.get('model'),
+        model=device_info.get('model'),
         name=device_info.get('name'),
         entry_type=DeviceEntryType.SERVICE,
     )
@@ -52,25 +52,28 @@ def new_entry_device(hass: HomeAssistant, device_info: dict, entry_id: str):
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Set up Wgi Openvfd."""
-    # _LOGGER.error('------------------ wgi_openvfd_v96max async_setup.')
-    hass.data.setdefault(DOMAIN, {
-        "store" : {}
-    })
+    hass.data.setdefault(DOMAIN, {})
+    hass.data[DOMAIN]['device']  = []
+    hass.data[DOMAIN]['device_info']  = []
 
-    store_obj = StoreBase(hass)
     cache = yaml_read(YAML_FILE)
     if cache is not None:
         hass.data[DOMAIN]['yaml_config'] = cache
     else:
         hass.data[DOMAIN]['yaml_config'] = {}
-    hass.data[DOMAIN]['store'] = await store_obj.async_load()
-
-    if len(hass.data[DOMAIN]['store']) >0:
-        _Zone = ZoneManage(hass)
+    register_entry = hass.config_entries.async_entries(DOMAIN)
+    if len(register_entry) == 0:
+        hass.async_create_task(
+            hass.config_entries.flow.async_init(
+                DOMAIN, context={"source": SOURCE_IMPORT}, data=BASE_DEVICE_CONFIG
+            )
+        )
+    else:
+        ZoneManage(hass)
         _entity_manage = EntityManage(hass)
         await _entity_manage.update_default_utc(hass.config.time_zone)
         await _entity_manage.update_default_utc_yaml(hass.config.time_zone)
-        # await _entity_manage.update_server()
+        await _entity_manage.update_server()
         if 'openvfd_server' in hass.data[DOMAIN]['yaml_config']:
             server_state = hass.data[DOMAIN]['yaml_config'].get('openvfd_server')
         else:
@@ -82,9 +85,6 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         await _entity_manage.update_server_state(is_server_enable)
         await _entity_manage.update_server_action()
 
-
-
-
     return True
 
 async def async_setup_entry(
@@ -92,12 +92,12 @@ async def async_setup_entry(
         entry: ConfigEntry,
 ) -> bool:
     """条目初始化"""
-    # _LOGGER.warning('----------------async_setup_entry')
-    if 'device' in  hass.data[DOMAIN]['store']:
-        devices =  hass.data[DOMAIN]['store']['device']
+    if 'device' in  BASE_DEVICE_CONFIG:
+
         if 'device' not in hass.data[DOMAIN]:
             hass.data[DOMAIN]['device']  = []
-        for device_info in devices:
+        hass.data[DOMAIN]['device_info'] = BASE_DEVICE_CONFIG.get('device')
+        for device_info in BASE_DEVICE_CONFIG.get('device'):
             dev = new_entry_device(hass, device_info, entry.entry_id)
             device_info['device_id'] = dev.id
             hass.data[DOMAIN]['device'].append(dev)
@@ -109,12 +109,9 @@ async def async_setup_entry(
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """卸载"""
-    # _LOGGER.warning("----------async_unload_entry")
     if unload_ok := await hass.config_entries.async_unload_platforms(entry,PLATFORMS):
-        store_obj = StoreBase(hass)
         hass.data.setdefault(DOMAIN, {})
-        await store_obj.async_store_remove()
-    return True
+    return unload_ok
 
 class ZoneManage:
 
@@ -129,16 +126,16 @@ class ZoneManage:
         if data and "time_zone" in data:
 
             zone = data.get('time_zone')
-
-            _store = self._hass.data[DOMAIN]['store']
-            _utc_val = _store.get('utc')
+            _entity_manage = EntityManage(self._hass)
+            _configs = self._hass.data[DOMAIN]
+            _utc_val = _configs.get('yaml_config').get('time_zone_name','')
 
             if zone != _utc_val:
-                _entity_manage = EntityManage(self._hass)
+
                 await _entity_manage.update_default_utc(zone)
 
 
-                devices = _store.get('device')
+                devices = _configs.get('device_info')
                 for device in devices:
                     entities = device.get('entities')
                     for entity in entities:
