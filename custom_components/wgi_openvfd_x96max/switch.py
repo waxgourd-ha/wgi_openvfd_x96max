@@ -103,7 +103,7 @@ class OpenvfdSwitch:
         elif name == OPENVFD_SERVER_STATE_ACTION:
             data = await _entity_manage.update_server_action_cmd(0)
             is_enable = data.get('status_code',-1)
-            if str(is_enable) == '0':
+            if str(is_enable) != '-1':
                 await _entity_manage.update_server_action_state(0)
                 send_state(self._hass, entity_id, 'on')
 
