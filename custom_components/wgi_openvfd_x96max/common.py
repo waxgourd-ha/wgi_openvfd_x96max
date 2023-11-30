@@ -523,6 +523,10 @@ class EntityManage:
             await self.get_update_server_api()
         is_enable = self._server_state.get('status_code',-1)
         await self.update_server_action_state(is_enable)
+        if str(is_enable) == '0':
+            send_state(self._hass, f"switch.{OPENVFD_SERVER_STATE_ACTION}", 'on')
+        else:
+            send_state(self._hass, f"switch.{OPENVFD_SERVER_STATE_ACTION}", 'off')
 
     async def update_server_action_state(self, is_enable=-1):
         if str(is_enable) == '0':
@@ -551,9 +555,11 @@ class EntityManage:
         if str(is_enable) == '1':
             await self.update_entity_state(f"switch.{OPENVFD_SERVER_CONTROL}")
             self.write_server('enable')
+            send_state(self._hass, f"switch.{OPENVFD_SERVER_CONTROL}", 'on')
         else:
             await self.update_entity_state(f"switch.{OPENVFD_SERVER_CONTROL}",'state','off')
             self.write_server('disable')
+            send_state(self._hass, f"switch.{OPENVFD_SERVER_CONTROL}", 'off')
 
 
 
