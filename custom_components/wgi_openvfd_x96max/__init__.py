@@ -4,7 +4,7 @@ from __future__ import annotations
 import logging
 
 from homeassistant.config_entries import ConfigType, ConfigEntry,SOURCE_IMPORT
-from homeassistant.const import EVENT_CORE_CONFIG_UPDATE,Platform
+from homeassistant.const import EVENT_CORE_CONFIG_UPDATE,Platform,STATE_ON,STATE_OFF
 from homeassistant.core import HomeAssistant, callback, Event, State
 
 
@@ -18,11 +18,16 @@ from .const import (
     DOMAIN,
     BASE_DEVICE_CONFIG,
     OPENVFD_SERVER_STATE_ENABLE,
+    OPENVFD_SERVER_STATE_DISABLE,
+    OPENVFD_TIME_ZONE_UTC_NAME,
+    OPENVFD_SERVER_CONTROL,
+    OPENVFD_SERVER_STATE_ACTION,
 )
 from .common import (
     EntityManage,
     yaml_read,
     YAML_FILE,
+    get_device_entity_info,
 )
 
 
@@ -55,7 +60,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN]['device']  = []
     hass.data[DOMAIN]['device_info']  = []
-
+    hass.data[DOMAIN]['entity_init_state'] = {}
     cache = yaml_read(YAML_FILE)
     if cache is not None:
         hass.data[DOMAIN]['yaml_config'] = cache
@@ -69,21 +74,36 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             )
         )
     else:
-        ZoneManage(hass)
-        _entity_manage = EntityManage(hass)
-        await _entity_manage.update_default_utc(hass.config.time_zone)
-        await _entity_manage.update_default_utc_yaml(hass.config.time_zone)
-        await _entity_manage.update_server()
-        if 'openvfd_server' in hass.data[DOMAIN]['yaml_config']:
-            server_state = hass.data[DOMAIN]['yaml_config'].get('openvfd_server')
-        else:
+        pass
+    ZoneManage(hass)
+    _entity_manage = EntityManage(hass)
+    await _entity_manage.update_default_utc(hass.config.time_zone)
+    await _entity_manage.update_default_utc_yaml(hass.config.time_zone)
+    # await _entity_manage.update_server()
+    await _entity_manage.update_server_action()
+    if 'openvfd_server' in hass.data[DOMAIN]['yaml_config']:
+        server_state = hass.data[DOMAIN]['yaml_config'].get('openvfd_server')
+    else:
+
+        _state = _entity_manage.openvfd_server_state()
+        if int(_state) == 1:
             server_state = OPENVFD_SERVER_STATE_ENABLE
-        if server_state == OPENVFD_SERVER_STATE_ENABLE:
-            is_server_enable = 1
         else:
-            is_server_enable = 0
-        await _entity_manage.update_server_state(is_server_enable)
-        await _entity_manage.update_server_action()
+            server_state = OPENVFD_SERVER_STATE_DISABLE
+    if server_state == OPENVFD_SERVER_STATE_ENABLE:
+        is_server_enable = 1
+        hass.data[DOMAIN]['entity_init_state']['openvfd_server'] = STATE_ON
+    else:
+        is_server_enable = 0
+        hass.data[DOMAIN]['entity_init_state']['openvfd_server'] = STATE_OFF
+    await _entity_manage.update_server_state(is_server_enable)
+
+    is_enable = _entity_manage.action_state()
+    if int(is_enable) == -1:
+        hass.data[DOMAIN]['entity_init_state']['action_enable'] = STATE_OFF
+    else:
+        hass.data[DOMAIN]['entity_init_state']['action_enable'] = STATE_ON
+    hass.data[DOMAIN]['entity_init_state']['time_zone_name'] = hass.data[DOMAIN]['yaml_config'].get('time_zone_name','')
 
     return True
 
@@ -92,11 +112,26 @@ async def async_setup_entry(
         entry: ConfigEntry,
 ) -> bool:
     """条目初始化"""
+    # _LOGGER.error(f'wgi_openvfd_x96max async_setup_entry')
     if 'device' in  BASE_DEVICE_CONFIG:
 
         if 'device' not in hass.data[DOMAIN]:
             hass.data[DOMAIN]['device']  = []
-        hass.data[DOMAIN]['device_info'] = BASE_DEVICE_CONFIG.get('device')
+        devices = hass.data[DOMAIN]['device_info'] = BASE_DEVICE_CONFIG.get('device')
+
+        for devuce in devices:
+            entities = devuce.get('entities')
+            if entities is not None and len(entities) >0:
+                for entitys in entities:
+                    _entity_id =  entitys.get('id')
+                    if _entity_id == OPENVFD_TIME_ZONE_UTC_NAME:
+                        entitys['state'] = hass.data[DOMAIN]['entity_init_state']['time_zone_name']
+                    elif _entity_id == f"switch.{OPENVFD_SERVER_STATE_ACTION}":
+                        entitys['state'] = hass.data[DOMAIN]['entity_init_state']['action_enable']
+                    elif _entity_id == f"switch.{OPENVFD_SERVER_CONTROL}":
+                        entitys['state'] = hass.data[DOMAIN]['entity_init_state']['openvfd_server']
+
+
         for device_info in BASE_DEVICE_CONFIG.get('device'):
             dev = new_entry_device(hass, device_info, entry.entry_id)
             device_info['device_id'] = dev.id

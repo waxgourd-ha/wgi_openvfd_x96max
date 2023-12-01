@@ -67,7 +67,7 @@ BASE_DEVICE_CONFIG = {
     "device": [
         {
             "manufacturer": "冬瓜电子",
-            # "configuration_url": "https://www.minforcode.com",
+            # "configuration_url": "",
             "sw_version": "0.1.0",
             "hw_version": "0.1.0",
             "model": "wg_x96max_openvfd",
@@ -118,66 +118,6 @@ BASE_DEVICE_CONFIG = {
                     "allow_config":"off",
                     "unit_of_measurement": ""
                 },
-                # {
-                #     "platform": "switch",
-                #     "id": "switch.led_button_apps",
-                #     "field_type": "led_button_apps",
-                #     "name": "apps灯",
-                #     "state": "on",
-                #     "allow_config": "on",
-                #     "icon": "mdi:lightbulb",
-                #     "unit_of_measurement": ""
-                # },
-                # {
-                #     "platform": "switch",
-                #     "id": "switch.led_button_setup",
-                #     "field_type": "led_button_setup",
-                #     "name": "setup灯",
-                #     "state": "on",
-                #     "allow_config": "on",
-                #     "icon": "mdi:lightbulb",
-                #     "unit_of_measurement": ""
-                # },
-                # {
-                #     "platform": "switch",
-                #     "id": "switch.led_button_usb",
-                #     "field_type": "led_button_usb",
-                #     "name": "usb灯",
-                #     "state": "on",
-                #     "allow_config": "on",
-                #     "icon": "mdi:lightbulb",
-                #     "unit_of_measurement": ""
-                # },
-                # {
-                #     "platform": "switch",
-                #     "id": "switch.led_button_sd",
-                #     "field_type": "led_button_sd",
-                #     "name": "SD灯",
-                #     "state": "on",
-                #     "allow_config": "on",
-                #     "icon": "mdi:lightbulb",
-                #     "unit_of_measurement": ""
-                # },
-                # {
-                #     "platform": "switch",
-                #     "id": "switch.led_button_hdmi",
-                #     "field_type": "led_button_hdmi",
-                #     "name": "HDMI灯",
-                #     "state": "on",
-                #     "allow_config": "on",
-                #     "icon": "mdi:lightbulb",
-                #     "unit_of_measurement": ""
-                # },
-                # {
-                #     "platform": "switch",
-                #     "id": "switch.led_button_cvbs",
-                #     "field_type": "led_button_cvbs",
-                #     "name": "CVBS灯",
-                #     "state": "on",
-                #     "allow_config": "on",
-                #     "icon": "mdi:lightbulb",
-                #     "unit_of_measurement": ""
-                # },
             ]
         }
     ]
