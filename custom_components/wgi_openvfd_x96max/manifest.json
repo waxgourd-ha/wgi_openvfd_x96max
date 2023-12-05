@@ -1,0 +1,9 @@
+{
+  "domain": "wgi_openvfd_x96max",
+  "name": "Wgi openvfd x96max",
+  "codeowners": ["@waxgourd-ha"],
+  "config_flow": true,
+  "documentation": "https://github.com/waxgourd-ha/wgi_openvfd_x96max",
+  "iot_class": "local_polling",
+  "version": "1.0.0"
+}

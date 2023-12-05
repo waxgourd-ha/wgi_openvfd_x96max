@@ -1,0 +1,38 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Openvfd setting",
+        "description": "",
+        "data": {
+          "file_state_interval": "file_state_interval"
+        }
+      }
+    },
+    "error": {
+    },
+    "abort": {
+      "single_instance_allowed": "Only a single configuration is allowed.",
+      "Not found integration config": "Not found integration config."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Openvfd x96max setting",
+        "description": "",
+        "data": {
+          "state_interval": "State interval(second)",
+          "listen_enable": "Listen enable"
+        }
+      }
+    },
+    "abort": {
+      "setting success": "Setting Success",
+      "setting fail": "Setting failed.",
+      "Not found integration config": "Not found integration config."
+    }
+  },
+  "title": "Openvfd setting"
+
+}

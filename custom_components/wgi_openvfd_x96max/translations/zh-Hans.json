@@ -1,0 +1,37 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Openvfd 控制",
+        "description": "",
+        "data": {
+        }
+      }
+    },
+    "error": {
+    },
+    "abort": {
+      "single_instance_allowed": "只允许单组配置。",
+      "Not found integration config": "未发现集成配置。",
+      "setting success": "配置成功。"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Openvfd x96max setting",
+        "description": "",
+        "data": {
+          "state_interval": "间隔时间(秒)",
+          "listen_enable": "启用监听"
+        }
+      }
+    },
+    "abort": {
+      "setting success": "配置成功。",
+      "setting fail": "配置失败。",
+      "Not found integration config": "未发现集成配置。"
+    }
+  },
+  "title": "Wgi Openvfd x96max"
+}
