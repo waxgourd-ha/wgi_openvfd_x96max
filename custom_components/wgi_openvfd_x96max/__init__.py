@@ -66,7 +66,6 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         hass.data[DOMAIN]['yaml_config'] = cache
     else:
         hass.data[DOMAIN]['yaml_config'] = {}
-    _LOGGER.warning(cache)
     register_entry = hass.config_entries.async_entries(DOMAIN)
     if len(register_entry) == 0:
         hass.async_create_task(
@@ -78,7 +77,6 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         pass
     ZoneManage(hass)
     _entity_manage = EntityManage(hass)
-    _LOGGER.warning(hass.config.time_zone)
     await _entity_manage.update_default_utc(hass.config.time_zone)
     await _entity_manage.update_default_utc_yaml(hass.config.time_zone)
     # await _entity_manage.update_server()
@@ -160,7 +158,6 @@ class ZoneManage:
         await self.zone_update(event.data)
 
     async def zone_update(self, data) -> None:
-        _LOGGER.warning(data)
         if data and "time_zone" in data:
 
             zone = data.get('time_zone')
