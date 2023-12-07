@@ -78,7 +78,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         pass
     ZoneManage(hass)
     _entity_manage = EntityManage(hass)
-    _LOGGER.warning(hass.config.time_zonehe)
+    _LOGGER.warning(hass.config.time_zone)
     await _entity_manage.update_default_utc(hass.config.time_zone)
     await _entity_manage.update_default_utc_yaml(hass.config.time_zone)
     # await _entity_manage.update_server()
