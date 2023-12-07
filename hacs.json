@@ -1,8 +1,0 @@
-{
-    "name": "Openvfd配置服务",
-    "country": "CN",
-    "render_readme": true,
-    "domains": [
-        "wgi_openvfd_x96max"
-    ]
-}
