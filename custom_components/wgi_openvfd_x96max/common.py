@@ -61,6 +61,8 @@ class ApiServer:
             pass
 
 async def read_yaml_async(file_path):
+    if not os.path.isfile(file_path):
+        return None
     async with aiofiles.open(file_path, mode='r') as f:
         content = await f.read()
         return yaml.safe_load(content)
