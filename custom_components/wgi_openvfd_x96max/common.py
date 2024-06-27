@@ -42,7 +42,7 @@ class ApiServer:
 
     def __init__(self, hass: HomeAssistant):
         self._hass = hass
-        self._url = "curl http://127.0.0.1:5000/openvfd/service?mode="
+        self._url = "curl -s -L -S http://127.0.0.1:5000/openvfd/service?mode="
 
     async def get_data(self,mode) -> dict:
         try:
