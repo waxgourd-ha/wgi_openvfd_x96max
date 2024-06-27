@@ -2,6 +2,8 @@
 import os
 import logging
 import json
+import aiofiles
+import yaml
 
 from homeassistant.config import async_hass_config_yaml
 
@@ -29,7 +31,6 @@ from .const import (
     OPENVFD_TIME_ZONE_UTC_NAME,
     OPENVFD_SERVER_CONTROL,
     OPENVFD_SERVER_STATE_ACTION,
-    OPENVFD_TIME_DELAYED_TIME,
     YAML_FILE,
     LED_COMMAND_PATH
 )
@@ -59,6 +60,10 @@ class ApiServer:
         except:
             pass
 
+async def read_yaml_async(file_path):
+    async with aiofiles.open(file_path, mode='r') as f:
+        content = await f.read()
+        return yaml.safe_load(content)
 
 def yaml_read(path):
     """Read YAML helper."""

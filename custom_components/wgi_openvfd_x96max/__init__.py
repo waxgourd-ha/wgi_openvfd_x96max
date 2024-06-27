@@ -25,9 +25,8 @@ from .const import (
 )
 from .common import (
     EntityManage,
-    yaml_read,
+    read_yaml_async,
     YAML_FILE,
-    get_device_entity_info,
 )
 
 
@@ -61,7 +60,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     hass.data[DOMAIN]['device']  = []
     hass.data[DOMAIN]['device_info']  = []
     hass.data[DOMAIN]['entity_init_state'] = {}
-    cache = yaml_read(YAML_FILE)
+    cache = await read_yaml_async(YAML_FILE)
     if cache is not None:
         hass.data[DOMAIN]['yaml_config'] = cache
     else:
@@ -168,7 +167,6 @@ class ZoneManage:
             if zone != _utc_val:
 
                 await _entity_manage.update_default_utc(zone)
-
 
                 devices = _configs.get('device_info')
                 for device in devices:
