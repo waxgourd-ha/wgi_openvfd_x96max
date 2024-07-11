@@ -114,7 +114,6 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     hass.data[DOMAIN]['entity_init_state']['time_zone_name'] = hass.data[DOMAIN]['yaml_config'].get('time_zone_name','')
 
     manifest_version = await get_version_last_from_gitcode()
-    _LOGGER.error(manifest_version)
     if manifest_version is not None:
         hass.data[DOMAIN]['manifest_update_last_version'] = hass.data[DOMAIN]['manifest_last_version'] = manifest_version
     else:
@@ -127,7 +126,6 @@ async def async_setup_entry(
         entry: ConfigEntry,
 ) -> bool:
     """条目初始化"""
-    # _LOGGER.error(f'wgi_openvfd_x96max async_setup_entry')
     if 'device' in  BASE_DEVICE_CONFIG:
 
         if 'device' not in hass.data[DOMAIN]:

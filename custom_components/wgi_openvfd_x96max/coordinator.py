@@ -44,7 +44,6 @@ class WgiOpenvfdDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         try:
             manifest_version = await get_version_last_from_gitcode()
-            _LOGGER.error(manifest_version)
             if manifest_version is not None:
                 if self.hass.data[DOMAIN]['manifest_update_last_version'] != manifest_version:
                     self.hass.data[DOMAIN]['manifest_update_last_version'] = manifest_version
