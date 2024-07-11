@@ -18,6 +18,9 @@ MANIFEST_FILE = f"{YAML_FILE_BASE}/manifest.json"
 VERSION_UPDATE_GITCODE_URL = f"https://raw.gitcode.com/wgihaos/{DOMAIN}/raw/main/custom_components/{DOMAIN}/manifest.json"
 FILE_DOWNLOAD_URL= "http://ota.wghaos.com/wgi/openvfd"
 
+#SCAN_INTERVAL = timedelta(seconds=30)
+SCAN_INTERVAL = timedelta(minutes=180)
+
 CONF_BASE_KEY = "openvfd"
 
 OPENVFD_SERVER_STATE_SCAN_INTERVAL = timedelta(seconds=20)

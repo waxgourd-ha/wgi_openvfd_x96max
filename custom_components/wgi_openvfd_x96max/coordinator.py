@@ -16,6 +16,7 @@ from homeassistant.util import dt as dt_util
 
 from .const import (
     DOMAIN,
+    SCAN_INTERVAL,
 )
 
 from .common import (
@@ -23,7 +24,7 @@ from .common import (
 )
 _LOGGER = logging.getLogger(__name__)
 
-SCAN_INTERVAL = timedelta(seconds=30)
+
 
 
 class WgiOpenvfdDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
