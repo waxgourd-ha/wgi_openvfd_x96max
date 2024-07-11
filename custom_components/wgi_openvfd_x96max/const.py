@@ -10,39 +10,14 @@ DOMAIN: Final = "wgi_openvfd_x96max"
 
 DEFAULT_NAME: Final = "OpenVfd x96max"
 YAML_FILE_BASE = os.path.dirname(__file__)
-
+TEMP_PATH = "/tmp"
+INSTALL_PATH = f"/config/custom_components/{DOMAIN}"
 YAML_FILE = f"{YAML_FILE_BASE}/config.yaml"
+MANIFEST_FILE = f"{YAML_FILE_BASE}/manifest.json"
 
-class LedCommandName(StrEnum):
-    """Led命令名称."""
+VERSION_UPDATE_GITCODE_URL = f"https://raw.gitcode.com/wgihaos/{DOMAIN}/raw/main/custom_components/{DOMAIN}/manifest.json"
+FILE_DOWNLOAD_URL= "http://ota.wghaos.com/wgi/openvfd"
 
-    APPS  = "apps"
-    SETUP = "setup"
-    USB   = "usb"
-    SD    = "sd"
-    HDMI  = "hdmi"
-    CVBS  = "cvbs"
-
-LED_COMMAND_PATH = "/sys/class/leds/openvfd"
-
-
-LED_COMMAND_ON = "echo {cmd} > {LED_COMMAND_PATH}led_on"
-LED_COMMAND_OFF = "echo {cmd} > {LED_COMMAND_PATH}led_off"
-LED_COMMAND_STATE = "cat {LED_COMMAND_PATH}led_on"
-
-class LedTitle(StrEnum):
-    """Led命令名称."""
-
-    PILOT_LAMP_ONE: str  = "pilot_lamp_one"
-
-
-PILOT_LAMP_ONE: str  = "pilot_lamp_one"
-
-
-STORAGE_VERSION = "1"
-STORAGE_MINOR_VERSION = "1"
-STORAGE_KEY = "wgi.openvfd_x96max"
-STORAGE_PRIVATE=False
 CONF_BASE_KEY = "openvfd"
 
 OPENVFD_SERVER_STATE_SCAN_INTERVAL = timedelta(seconds=20)
@@ -67,9 +42,6 @@ BASE_DEVICE_CONFIG = {
     "device": [
         {
             "manufacturer": "冬瓜电子",
-            # "configuration_url": "",
-            "sw_version": "0.1.0",
-            "hw_version": "0.1.0",
             "model": "wg_x96max_openvfd",
             "id": "vfd-mf-100",
             "name": "Openvfd设备",

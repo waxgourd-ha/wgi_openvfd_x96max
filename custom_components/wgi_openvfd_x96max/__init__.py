@@ -22,20 +22,25 @@ from .const import (
     OPENVFD_TIME_ZONE_UTC_NAME,
     OPENVFD_SERVER_CONTROL,
     OPENVFD_SERVER_STATE_ACTION,
+    MANIFEST_FILE,
 )
 from .common import (
     EntityManage,
     read_yaml_async,
+    read_json_async,
+    get_version_last_from_gitcode,
     YAML_FILE,
 )
 
+from .coordinator import WgiOpenvfdDataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
 PLATFORMS = [
     Platform.SENSOR,
     Platform.SWITCH,
-    Platform.BUTTON
+    Platform.BUTTON,
+    Platform.UPDATE,
 ]
 
 def new_entry_device(hass: HomeAssistant, device_info: dict, entry_id: str):
@@ -43,11 +48,8 @@ def new_entry_device(hass: HomeAssistant, device_info: dict, entry_id: str):
     device_registry = dr.async_get(hass)
     dev = device_registry.async_get_or_create(
         manufacturer=device_info.get('manufacturer'),
-        # configuration_url=device_info.get('configuration_url'),
         identifiers={(DOMAIN, '{}'.format(device_info.get('id')))},
         config_entry_id=entry_id,
-        # sw_version=device_info.get('sw_version'),
-        # hw_version=device_info.get('hw_version'),
         model=device_info.get('model'),
         name=device_info.get('name'),
         entry_type=DeviceEntryType.SERVICE,
@@ -57,9 +59,15 @@ def new_entry_device(hass: HomeAssistant, device_info: dict, entry_id: str):
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Set up Wgi Openvfd."""
     hass.data.setdefault(DOMAIN, {})
+    hass.data[DOMAIN]['manifest_version']  = "1.0.0"
+    hass.data[DOMAIN]['manifest_last_version']  = "1.0.0"
+    hass.data[DOMAIN]['manifest_update_last_version']  = "1.0.0"
     hass.data[DOMAIN]['device']  = []
     hass.data[DOMAIN]['device_info']  = []
     hass.data[DOMAIN]['entity_init_state'] = {}
+    manifest_json = await read_json_async(MANIFEST_FILE)
+    if manifest_json is not None:
+        hass.data[DOMAIN]['manifest_version'] = manifest_json.get("version")
     cache = await read_yaml_async(YAML_FILE)
     if cache is not None:
         hass.data[DOMAIN]['yaml_config'] = cache
@@ -74,6 +82,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         )
     else:
         pass
+    hass.data[DOMAIN]['coordinator'] = WgiOpenvfdDataUpdateCoordinator(hass)
     ZoneManage(hass)
     _entity_manage = EntityManage(hass)
     await _entity_manage.update_default_utc(hass.config.time_zone)
@@ -103,6 +112,13 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     else:
         hass.data[DOMAIN]['entity_init_state']['action_enable'] = STATE_ON
     hass.data[DOMAIN]['entity_init_state']['time_zone_name'] = hass.data[DOMAIN]['yaml_config'].get('time_zone_name','')
+
+    manifest_version = await get_version_last_from_gitcode()
+    _LOGGER.error(manifest_version)
+    if manifest_version is not None:
+        hass.data[DOMAIN]['manifest_update_last_version'] = hass.data[DOMAIN]['manifest_last_version'] = manifest_version
+    else:
+        hass.data[DOMAIN]['manifest_update_last_version'] = hass.data[DOMAIN]['manifest_last_version'] = hass.data[DOMAIN]['manifest_version']
 
     return True
 
