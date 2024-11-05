@@ -6,33 +6,26 @@ from typing import Any
 
 from homeassistant.components.switch import SwitchEntity, SwitchEntityDescription
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import Platform
 from homeassistant.const import (
-    Platform,
     SERVICE_TURN_ON,
     SERVICE_TURN_OFF,
-    STATE_ON,
+    STATE_ON
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-
-from homeassistant.helpers import (
-    entity,
-    device_registry as dr,
-    entity_registry as er,
-)
 from .const import (
     DOMAIN,
-    ENTITY_CONFIG,
-    LED_COMMAND_FILE_ON,
-    LED_COMMAND_FILE_OFF
-)
+    OPENVFD_SERVER_STATE_ACTION,
+    OPENVFD_SERVER_CONTROL,
 
+)
 from .common import (
+    WgiEntity,
+    async_common_setup_entry,
+    EntityManage,
     send_state,
-    send_cmd,
 )
-
-from .wgi_entity import WgiEntity
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -43,98 +36,17 @@ async def async_setup_entry(
         async_add_entities: AddEntitiesCallback
 ):
     """async setup entry"""
-
-    m2 = []
-    if len(ENTITY_CONFIG) >0:
-        device_entry = hass.data[DOMAIN]['device']
-        entities = hass.data[DOMAIN]['entity_info']
-
-        if entities is not None and len(entities) >0:
-            for entitys in entities:
-                _platform = entitys.get('platform')
-                if _platform != Platform.SWITCH:
-                    continue
-
-                _entity_id =  entitys.get('id')
-                icon = entitys.get('icon')
-
-                value = entitys.get('state')
-                desc = SwitchEntityDescription(
-                    key=_entity_id,
-                    force_update = True,
-                    icon= icon,
-                    has_entity_name= True,
-                    name= entitys.get('name'),
-                    unit_of_measurement= entitys.get('unit_of_measurement'),
-                )
-
-                ent = er.RegistryEntry(
-                    entity_id=_entity_id,
-                    unique_id=_entity_id,
-                    platform=_platform,
-                    config_entry_id=entry.entry_id,
-                    device_id=device_entry.id,
-                    id=_entity_id,
-                    has_entity_name=True,
-
-                )
-
-                deviceInfo = entity.DeviceInfo(
-                    manufacturer=device_entry.manufacturer,
-                    entry_type=device_entry.entry_type,
-                    identifiers=device_entry.identifiers,
-                    model=device_entry.model,
-                    name=device_entry.name
-                )
-
-                ##注册
-                sw = WgiSwitch(
-                    registry_entry=ent,
-                    device_entry=device_entry,
-                    entity_description=desc,
-                    device_info=deviceInfo,
-                    unique_id=_entity_id,
-                    entity_id=_entity_id,
-                    icon= icon,
-                    name=entitys.get('name'),
-                    device_id=device_entry.id,
-                    has_entity_name=True,
-                    capability_attributes=ent.capabilities,
-                    supported_features=ent.supported_features,
-                    entity_category=ent.entity_category,
-                    original_device_class=ent.original_device_class,
-                    original_icon=ent.original_icon,
-                    original_name=ent.original_name,
-                    translation_key=ent.translation_key,
-                    unit_of_measurement=entitys.get('unit_of_measurement'),
-                    device_class=ent.device_class,
-                    should_poll=False,
-                    state = value
-                )
-                m2.append(sw)
-                hass.data[DOMAIN]['entities'].append(sw)
-
-    if len(m2) > 0:
-        async_add_entities(m2, True)
-
-    openvfd = hass.data[DOMAIN]['openvfd']
-    if openvfd is not None:
-        openvfd.reg_call(switch_update_state)
-
-def switch_update_state(hass:HomeAssistant, name, state):
-    entity_info = hass.data[DOMAIN]['entity_info']
-    hass.data[DOMAIN]['entities']
-    if len(entity_info)>0:
-        for entity in entity_info:
-            field_type = entity.get('field_type')
-            if name == field_type:
-                eid = entity.get('id')
-                for entity_obj in hass.data[DOMAIN]['entities']:
-                    if eid == entity_obj.entity_id:
-                        send_state(hass, entity_obj.entity_id,state)
-                        break
-                break
-
+    if 'device_info' in hass.data[DOMAIN]:
+        await async_common_setup_entry(
+            hass,
+            hass.data[DOMAIN]['device_info'],
+            entry,
+            async_add_entities,
+            SwitchEntityDescription,
+            WgiSwitch,
+            Platform.SWITCH,
+            _LOGGER
+        )
 
 
 class WgiSwitch(WgiEntity, SwitchEntity, ABC):
@@ -145,13 +57,15 @@ class WgiSwitch(WgiEntity, SwitchEntity, ABC):
     def __init__(self, **kwargs):
         super(WgiSwitch, self).__init__(**kwargs)
 
-
+        if (old_state := kwargs.get("old_state")) is not None:
+            self._attr_capability_attributes = old_state.attributes
+            self._attr_is_on = old_state.state == STATE_ON
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn off"""
         self._attr_is_on = False
         entity_id_list = self.entity_id.split('.')
-        if entity_id_list[1].startswith('led_'):
+        if entity_id_list[1].startswith('openvfd_server_'):
             _openvfd_seitch = OpenvfdSwitch(self.hass)
             await _openvfd_seitch.turn_off(self.entity_id,entity_id_list[1])
 
@@ -159,7 +73,7 @@ class WgiSwitch(WgiEntity, SwitchEntity, ABC):
         """Turn on"""
         self._attr_is_on = True
         entity_id_list = self.entity_id.split('.')
-        if entity_id_list[1].startswith('led_'):
+        if entity_id_list[1].startswith('openvfd_'):
             _openvfd_seitch = OpenvfdSwitch(self.hass)
             await _openvfd_seitch.turn_on(self.entity_id,entity_id_list[1])
 
@@ -170,15 +84,26 @@ class OpenvfdSwitch:
         self._hass = hass
 
     async def turn_off(self, entity_id,name):
-        name_list = name.split("_")
-        file_type = name_list[2]
-        send_cmd(file_type, LED_COMMAND_FILE_OFF)
-        send_state(self._hass, entity_id, 'off')
+        _entity_manage = EntityManage(self._hass)
+        if name == OPENVFD_SERVER_CONTROL:
+            await _entity_manage.update_server_state(0)
+            send_state(self._hass, entity_id, 'off')
+        elif name == OPENVFD_SERVER_STATE_ACTION:
+            data = await _entity_manage.update_server_action_cmd(-1)
+            is_enable = data.get('status_code',-1)
+            if is_enable == -1:
+                await _entity_manage.update_server_action_state(-1)
+                send_state(self._hass, entity_id, 'off')
 
     async def turn_on(self, entity_id,name):
-        name_list = name.split("_")
-        file_type = name_list[2]
-        send_cmd(file_type, LED_COMMAND_FILE_ON)
-        send_state(self._hass, entity_id, 'on')
-
+        _entity_manage = EntityManage(self._hass)
+        if name == OPENVFD_SERVER_CONTROL:
+            await _entity_manage.update_server_state(1)
+            send_state(self._hass, entity_id, 'on')
+        elif name == OPENVFD_SERVER_STATE_ACTION:
+            data = await _entity_manage.update_server_action_cmd(0)
+            is_enable = data.get('status_code',-1)
+            if str(is_enable) != '-1':
+                await _entity_manage.update_server_action_state(0)
+                send_state(self._hass, entity_id, 'on')
 
