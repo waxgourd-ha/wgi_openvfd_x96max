@@ -4,19 +4,20 @@ on:
     tags:
       - '*'
 jobs:
-  release:
+  release_zip_file:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v2
- 
+        uses: actions/checkout@v4.2.2
+
+      - name: ZIP Dir
+        run: |
+          cd ${{ github.workspace }}/
+          zip wgi_openvfd_x96max.zip -r ./
+
       - name: Create Release
-        id: create_release
-        uses: actions/create-release@latest
+        uses: softprops/action-gh-release@v2.0.9
         env:
           GITHUB_TOKEN: ${{ secrets.x96max_token }}
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref_name }}
-          body: |
-            Changes in this Release
+          files: ${{ github.workspace }}/wgi_openvfd_x96max.zip
