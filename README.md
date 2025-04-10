@@ -5,7 +5,7 @@
 
 ### 搜索安装
 
-搜索 `Wgi openvfd x96max`安装
+搜索 `Wgi openvfd`安装
 
 ### 配置安装
 

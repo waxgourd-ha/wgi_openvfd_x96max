@@ -56,7 +56,7 @@ class WgiSwitch(WgiEntity, SwitchEntity, ABC):
 
     def __init__(self, **kwargs):
         super(WgiSwitch, self).__init__(**kwargs)
-
+        self._attr_entity_registry_visible_default = False
         if (old_state := kwargs.get("old_state")) is not None:
             self._attr_capability_attributes = old_state.attributes
             self._attr_is_on = old_state.state == STATE_ON
@@ -76,6 +76,7 @@ class WgiSwitch(WgiEntity, SwitchEntity, ABC):
         if entity_id_list[1].startswith('openvfd_'):
             _openvfd_seitch = OpenvfdSwitch(self.hass)
             await _openvfd_seitch.turn_on(self.entity_id,entity_id_list[1])
+            
 
 
 class OpenvfdSwitch:

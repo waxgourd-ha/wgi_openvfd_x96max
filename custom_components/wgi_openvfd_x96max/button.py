@@ -56,6 +56,7 @@ class M2Button(WgiEntity, ButtonEntity, ABC):
 
     def __init__(self, **kwargs):
         super(M2Button, self).__init__(**kwargs)
+        self._attr_entity_registry_visible_default = False
 
     async def async_press(self) -> None:
         """Press the button."""

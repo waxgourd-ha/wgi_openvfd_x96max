@@ -13,6 +13,7 @@ from homeassistant.helpers.typing import Any
 
 from .const import (
     DOMAIN,
+    DEFAULT_NAME,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -40,7 +41,7 @@ class MgiConfigFlow(ConfigFlow, domain=DOMAIN):
         errors = {}
         try:
             if user_input is not None:
-                return self.async_create_entry(title=DOMAIN, data=user_input)
+                return self.async_create_entry(title=DEFAULT_NAME, data=user_input)
 
 
         except Exception as e:  # pylint: disable=broad-except

@@ -8,7 +8,7 @@ from datetime import timedelta
 
 DOMAIN: Final = "wgi_openvfd_x96max"
 
-DEFAULT_NAME: Final = "OpenVfd x96max"
+DEFAULT_NAME: Final = "Wgi OpenVfd"
 YAML_FILE_BASE = os.path.dirname(__file__)
 TEMP_PATH = "/tmp"
 INSTALL_PATH = f"/config/custom_components/{DOMAIN}"
@@ -45,7 +45,7 @@ BASE_DEVICE_CONFIG = {
     "device": [
         {
             "manufacturer": "冬瓜电子",
-            "model": "wg_x96max_openvfd",
+            "model": "wg_openvfd",
             "id": "vfd-mf-100",
             "name": "Openvfd设备",
             "entities": [

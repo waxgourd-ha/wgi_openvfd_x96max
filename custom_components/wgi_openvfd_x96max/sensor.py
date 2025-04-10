@@ -42,3 +42,7 @@ async def async_setup_entry(
 
 class M2Sensor(WgiEntity, SensorEntity):
     """M2 Sensor Entity"""
+
+    def __init__(self, **kwargs):
+        super(M2Sensor, self).__init__(**kwargs)
+        self._attr_entity_registry_visible_default = False
