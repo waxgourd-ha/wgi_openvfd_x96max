@@ -1,12 +1,12 @@
 # Wgi Openvfd X96max
 
-x96max显示屏灯UI控制程序
+显示屏灯UI控制程序
 
 ## 安装集成
 
 ### 搜索安装
 
-搜索 `Wgi openvfd x96max`安装
+搜索 `Wgi openvfd`安装
 
 ### 配置安装
 

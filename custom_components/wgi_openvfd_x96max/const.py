@@ -8,7 +8,7 @@ from datetime import timedelta
 
 DOMAIN: Final = "wgi_openvfd_x96max"
 
-DEFAULT_NAME: Final = "OpenVfd x96max"
+DEFAULT_NAME: Final = "Wgi OpenVfd"
 YAML_FILE_BASE = os.path.dirname(__file__)
 TEMP_PATH = "/tmp"
 INSTALL_PATH = f"/config/custom_components/{DOMAIN}"
@@ -16,6 +16,7 @@ YAML_FILE = f"{YAML_FILE_BASE}/config.yaml"
 MANIFEST_FILE = f"{YAML_FILE_BASE}/manifest.json"
 
 VERSION_UPDATE_GITCODE_URL = f"https://raw.gitcode.com/wgihaos/{DOMAIN}/raw/main/custom_components/{DOMAIN}/manifest.json"
+VERSION_UPDATE_URL = f"https://api.github.com/repos/waxgourd-ha/wgi_openvfd_x96max/releases/latest"
 FILE_DOWNLOAD_URL= "http://ota.wghaos.com/wgi/openvfd"
 
 #SCAN_INTERVAL = timedelta(seconds=30)
@@ -45,7 +46,7 @@ BASE_DEVICE_CONFIG = {
     "device": [
         {
             "manufacturer": "冬瓜电子",
-            "model": "wg_x96max_openvfd",
+            "model": "wg_openvfd",
             "id": "vfd-mf-100",
             "name": "Openvfd设备",
             "entities": [

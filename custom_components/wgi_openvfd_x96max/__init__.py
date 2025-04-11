@@ -28,7 +28,7 @@ from .common import (
     EntityManage,
     read_yaml_async,
     read_json_async,
-    get_version_last_from_gitcode,
+    get_version_info_last_from_github,
     YAML_FILE,
 )
 
@@ -113,7 +113,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         hass.data[DOMAIN]['entity_init_state']['action_enable'] = STATE_ON
     hass.data[DOMAIN]['entity_init_state']['time_zone_name'] = hass.data[DOMAIN]['yaml_config'].get('time_zone_name','')
 
-    manifest_version = await get_version_last_from_gitcode()
+    manifest_version = await get_version_info_last_from_github()
     if manifest_version is not None:
         hass.data[DOMAIN]['manifest_update_last_version'] = hass.data[DOMAIN]['manifest_last_version'] = manifest_version
     else:

@@ -36,6 +36,7 @@ from .const import (
     OPENVFD_SERVER_STATE_ACTION,
     YAML_FILE,
     VERSION_UPDATE_GITCODE_URL,
+    VERSION_UPDATE_URL,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -370,6 +371,26 @@ async def get_version_last_from_gitcode() -> str | None:
                 return info.get("version")
     except Exception:
         pass
+    return None
+
+async def get_version_info_last_from_github() -> str | None:
+    try:
+        header={
+            "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+        }
+        timeout = ClientTimeout(total=60)
+        async with ClientSession(timeout=timeout) as session:
+            async with session.get(VERSION_UPDATE_URL,headers=header) as resp:
+                if resp.status == 200:
+                    latest_release = await resp.json()
+                    return latest_release['name']
+                    # latest_release = response.json()
+                    # print(f"Latest release: {latest_release['name']}")
+                    # print(f"Download URL: {latest_release['assets'][0]['browser_download_url']}")
+                    # return await resp.text()
+
+    except TimeoutError:
+        _LOGGER.error("Download failed.")
     return None
 
 class ConfigYaml:
