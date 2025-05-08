@@ -16,12 +16,15 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from homeassistant.helpers.device_registry import DeviceInfo
 
 from .const import (
     DOMAIN,
     TEMP_PATH,
     INSTALL_PATH,
     FILE_DOWNLOAD_URL,
+    DEVICE_NAME,
+    DEVICE_UNIQUE_ID
 )
 
 from .common import (
@@ -50,8 +53,8 @@ async def async_setup_entry(
         [
             OpenvfdUpdate(
                 hass.data[DOMAIN]['coordinator'],
-                unique_id="update",
-                title="Openvfd Update.",
+                unique_id="Openvfd_update",
+                title="Openvfd update",
                 installed_version= hass.data[DOMAIN]['manifest_version'],
                 latest_version= hass.data[DOMAIN]['manifest_last_version'],
                 support_progress=True,
@@ -72,7 +75,7 @@ class OpenvfdUpdate(UpdateEntity,CoordinatorEntity[WgiOpenvfdDataUpdateCoordinat
     """Representation of a OpenvfdUpdate update entity."""
 
     _attr_has_entity_name = True
-    _attr_name = None
+    _attr_name = "Wgi Openvfd"
     _attr_should_poll = False
 
     def __init__(
@@ -99,6 +102,10 @@ class OpenvfdUpdate(UpdateEntity,CoordinatorEntity[WgiOpenvfdDataUpdateCoordinat
         self._attr_release_url = release_url
         self._attr_title = title
         self._attr_unique_id = unique_id
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, DEVICE_UNIQUE_ID)},
+            name=DEVICE_NAME,
+        )
 
         if support_install:
             self._attr_supported_features |= (
@@ -112,10 +119,14 @@ class OpenvfdUpdate(UpdateEntity,CoordinatorEntity[WgiOpenvfdDataUpdateCoordinat
             self._attr_supported_features |= UpdateEntityFeature.RELEASE_NOTES
 
     @property
+    def name(self) -> str:
+        """Return name of the entity."""
+        return self._attr_name
+
+    @property
     def latest_version(self) -> str:
         """Return latest version of the entity."""
         return self._attr_latest_version
-
 
     @property
     def installed_version(self) -> str:

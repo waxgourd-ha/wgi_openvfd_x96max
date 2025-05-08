@@ -41,13 +41,16 @@ OPENVFD_TIME_ZONE_GMT = "sensor.openvfd_time_zone_gmt"
 
 OPENVFD_TIME_DELAYED_TIME = 10
 
+DEVICE_NAME = "Wgi Openvfd"
+DEVICE_UNIQUE_ID = "vfd-mf-100"
+
 BASE_DEVICE_CONFIG = {
     "device": [
         {
             "manufacturer": "冬瓜电子",
             "model": "wg_openvfd",
-            "id": "vfd-mf-100",
-            "name": "Openvfd设备",
+            "id": DEVICE_UNIQUE_ID,
+            "name": DEVICE_NAME,
             "entities": [
                 {
                     "platform": "sensor",
