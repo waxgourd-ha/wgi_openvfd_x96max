@@ -3,7 +3,7 @@
   "name": "Wgi openvfd",
   "codeowners": ["@waxgourd-ha"],
   "config_flow": true,
-  "documentation": "https://jihulab.com/wgihaos/wgi_openvfd_x96max",
+  "documentation": "https://gitcode.com/wgihaos/wgi_openvfd_x96max",
   "iot_class": "local_polling",
-  "version": "1.3.0"
+  "version": "1.3.1"
 }

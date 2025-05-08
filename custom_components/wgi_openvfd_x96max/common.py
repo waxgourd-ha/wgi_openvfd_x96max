@@ -172,6 +172,19 @@ async def common_setup_entry(
                     device_id=device_entry.id,
                     id=_entity_id,
                     has_entity_name=True,
+                    capabilities={},
+                    config_subentry_id=None,
+                    created_at=None,
+                    disabled_by=None,
+                    entity_category=None,
+                    hidden_by=None,
+                    options={},
+                    original_device_class=None,
+                    original_icon=icon,
+                    original_name=entitys.get('name'),
+                    supported_features=0,
+                    translation_key=None,
+                    unit_of_measurement=entitys.get('unit_of_measurement')
                 )
 
                 deviceInfo = entity.DeviceInfo(
