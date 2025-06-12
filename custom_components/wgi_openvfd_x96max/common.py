@@ -1,4 +1,3 @@
-
 import os
 import logging
 import json
@@ -22,6 +21,7 @@ from homeassistant.helpers import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import  Platform
+from homeassistant.const import __version__ as HA_VERSION 
 from homeassistant.helpers.entity import Entity, EntityDescription
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import Any, Mapping, StateType
@@ -37,6 +37,8 @@ from .const import (
     YAML_FILE,
     VERSION_UPDATE_GITCODE_URL,
 )
+
+import packaging
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -126,6 +128,17 @@ async def get_device_entity_info(hass: HomeAssistant, device_id: str):
             if device_id == device.id:
                 return device
 
+def parse_version(hass: HomeAssistant, version: str):
+    version_entity = hass.states.get("system.health")
+    if version_entity:
+        current_version = version_entity.attributes.get("version", "2025.5.3")
+    else:
+        # 方案2：从homeassistant.const获取（部分旧版本可用）
+        current_version = HA_VERSION if "HA_VERSION" in globals() else "2025.5.3"
+    _LOGGER.debug(f"Current Home Assistant version: {current_version}, Required version: {version}")
+    is_supported = packaging.version.parse(current_version) >= packaging.version.parse(version)
+    return is_supported
+
 async def common_setup_entry(
         hass: HomeAssistant,
         devices: list,
@@ -139,7 +152,8 @@ async def common_setup_entry(
 ) -> None:
     if log is None:
         log = logging.getLogger(__name__)
-
+    is_supported = parse_version(hass, "2025.6.0")
+    
     m2 = []
     for device_info in devices:
         entities = device_info.get('entities')
@@ -164,28 +178,53 @@ async def common_setup_entry(
                     unit_of_measurement= entitys.get('unit_of_measurement'),
                 )
 
-                ent = er.RegistryEntry(
-                    entity_id=_entity_id,
-                    unique_id=_entity_id,
-                    platform=_platform,
-                    config_entry_id=entry.entry_id,
-                    device_id=device_entry.id,
-                    id=_entity_id,
-                    has_entity_name=True,
-                    capabilities={},
-                    config_subentry_id=None,
-                    created_at=None,
-                    disabled_by=None,
-                    entity_category=None,
-                    hidden_by=None,
-                    options={},
-                    original_device_class=None,
-                    original_icon=icon,
-                    original_name=entitys.get('name'),
-                    supported_features=0,
-                    translation_key=None,
-                    unit_of_measurement=entitys.get('unit_of_measurement')
-                )
+                if is_supported:
+                    ent = er.RegistryEntry(
+                        entity_id=_entity_id,
+                        unique_id=_entity_id,
+                        platform=_platform,
+                        config_entry_id=entry.entry_id,
+                        device_id=device_entry.id,
+                        id=_entity_id,
+                        has_entity_name=True,
+                        capabilities={},
+                        config_subentry_id=None,
+                        created_at=None,
+                        disabled_by=None,
+                        entity_category=None,
+                        hidden_by=None,
+                        options={},
+                        original_device_class=None,
+                        original_icon=icon,
+                        original_name=entitys.get('name'),
+                        supported_features=0,
+                        translation_key=None,
+                        unit_of_measurement=entitys.get('unit_of_measurement'),
+                        suggested_object_id=""
+                    )
+                else:
+                    ent = er.RegistryEntry(
+                        entity_id=_entity_id,
+                        unique_id=_entity_id,
+                        platform=_platform,
+                        config_entry_id=entry.entry_id,
+                        device_id=device_entry.id,
+                        id=_entity_id,
+                        has_entity_name=True,
+                        capabilities={},
+                        config_subentry_id=None,
+                        created_at=None,
+                        disabled_by=None,
+                        entity_category=None,
+                        hidden_by=None,
+                        options={},
+                        original_device_class=None,
+                        original_icon=icon,
+                        original_name=entitys.get('name'),
+                        supported_features=0,
+                        translation_key=None,
+                        unit_of_measurement=entitys.get('unit_of_measurement')
+                    )
 
                 deviceInfo = entity.DeviceInfo(
                     entry_type=device_entry.entry_type,
