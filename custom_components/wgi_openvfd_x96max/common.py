@@ -5,6 +5,7 @@ import aiofiles
 import yaml
 import zipfile
 import shutil
+from typing import Optional, Callable, Awaitable
 
 from packaging import version
 
@@ -75,7 +76,8 @@ class ApiServer:
             return _json_data
         except:
             pass
-        return {}
+        # API 错误时默认返回启用状态
+        return {'enable': 1, 'status_code': 0}
 
     async def cmd(self, mode) -> None:
         try:
@@ -147,120 +149,162 @@ async def common_setup_entry(
         description: EntityDescription,
         mentity: Entity,
         platform_type: Platform | str,
-        log: logging = None
-
+        log: logging = None,
+        entity_validator: Optional[Callable[[dict], bool]] = None,
+        entity_processor: Optional[Callable[[dict], dict]] = None,
+        post_create_hook: Optional[Callable[[Entity], Awaitable[None]]] = None
 ) -> None:
+    """通用实体设置入口函数。
+    
+    Args:
+        hass: Home Assistant 实例
+        devices: 设备列表
+        entry: 配置入口
+        async_add_entities: 添加实体的回调函数
+        description: 实体描述类
+        mentity: 实体类
+        platform_type: 平台类型
+        log: 日志记录器
+        entity_validator: 可选的实体验证函数
+        entity_processor: 可选的实体处理函数
+        post_create_hook: 可选的实体创建后处理函数
+    """
     if log is None:
         log = logging.getLogger(__name__)
-    is_supported = parse_version(hass, "2025.6.0")
     
-    m2 = []
+    is_supported = parse_version(hass, "2025.6.0")
+    entities = []
+    
     for device_info in devices:
-        entities = device_info.get('entities')
+        try:
+            device_id = device_info.get('device_id')
+            if not device_id:
+                log.warning("Device ID not found in device info")
+                continue
 
-        device_entry = await get_device_entity_info(hass, device_info.get('device_id'))
-        if entities is not None and len(entities) >0:
-            for entitys in entities:
-                _platform = entitys.get('platform')
-                if _platform != platform_type:
+            device_entry = await get_device_entity_info(hass, device_id)
+            if not device_entry:
+                log.warning("Device entry not found for device %s", device_id)
+                continue
+
+            device_entities = device_info.get('entities', [])
+            for entity_info in device_entities:
+                if entity_info.get('platform') != platform_type:
                     continue
 
-                _entity_id =  entitys.get('id')
-                icon = entitys.get('icon')
-
-                value = entitys.get('state')
-                desc = description(
-                    key=_entity_id,
-                    force_update = True,
-                    icon= icon,
-                    has_entity_name= True,
-                    name= entitys.get('name'),
-                    unit_of_measurement= entitys.get('unit_of_measurement'),
-                )
-
-                if is_supported:
-                    ent = er.RegistryEntry(
-                        entity_id=_entity_id,
-                        unique_id=_entity_id,
-                        platform=_platform,
-                        config_entry_id=entry.entry_id,
-                        device_id=device_entry.id,
-                        id=_entity_id,
-                        has_entity_name=True,
-                        capabilities={},
-                        config_subentry_id=None,
-                        created_at=None,
-                        disabled_by=None,
-                        entity_category=None,
-                        hidden_by=None,
-                        options={},
-                        original_device_class=None,
-                        original_icon=icon,
-                        original_name=entitys.get('name'),
-                        supported_features=0,
-                        translation_key=None,
-                        unit_of_measurement=entitys.get('unit_of_measurement'),
-                        suggested_object_id=""
+                if entity_validator and not entity_validator(entity_info):
+                    log.warning(
+                        "Entity validation failed for %s",
+                        entity_info.get('id')
                     )
-                else:
-                    ent = er.RegistryEntry(
-                        entity_id=_entity_id,
-                        unique_id=_entity_id,
-                        platform=_platform,
-                        config_entry_id=entry.entry_id,
-                        device_id=device_entry.id,
-                        id=_entity_id,
-                        has_entity_name=True,
-                        capabilities={},
-                        config_subentry_id=None,
-                        created_at=None,
-                        disabled_by=None,
-                        entity_category=None,
-                        hidden_by=None,
-                        options={},
-                        original_device_class=None,
-                        original_icon=icon,
-                        original_name=entitys.get('name'),
-                        supported_features=0,
-                        translation_key=None,
-                        unit_of_measurement=entitys.get('unit_of_measurement')
-                    )
+                    continue
 
-                deviceInfo = entity.DeviceInfo(
-                    entry_type=device_entry.entry_type,
-                    identifiers=device_entry.identifiers,
-                    name=device_entry.name,
-                )
-
-                ##注册
-                m2.append(
-                    mentity(
-                        registry_entry=ent,
+                try:
+                    entity = await _create_entity(
+                        hass=hass,
+                        entry=entry,
                         device_entry=device_entry,
-                        entity_description=desc,
-                        device_info=deviceInfo,
-                        unique_id=_entity_id,
-                        entity_id=_entity_id,
-                        icon= icon,
-                        name=entitys.get('name'),
-                        device_id=device_entry.id,
-                        has_entity_name=True,
-                        capability_attributes=ent.capabilities,
-                        supported_features=ent.supported_features,
-                        entity_category=ent.entity_category,
-                        original_device_class=ent.original_device_class,
-                        original_icon=ent.original_icon,
-                        original_name=ent.original_name,
-                        translation_key=ent.translation_key,
-                        unit_of_measurement=entitys.get('unit_of_measurement'),
-                        device_class=ent.device_class,
-                        should_poll=False,
-                        state = value
+                        entity_info=entity_info,
+                        description_class=description,
+                        entity_class=mentity,
+                        is_supported=is_supported,
+                        log=log
                     )
-                )
-    if len(m2) > 0:
-        async_add_entities(m2, True)
 
+                    if entity_processor:
+                        entity_info = entity_processor(entity_info)
+
+                    if post_create_hook:
+                        await post_create_hook(entity)
+
+                    entities.append(entity)
+                    log.debug(
+                        "Created entity %s for device %s",
+                        entity_info.get('id'),
+                        device_id
+                    )
+                except Exception as e:
+                    log.error(
+                        "Error creating entity %s: %s",
+                        entity_info.get('id'),
+                        str(e),
+                        exc_info=True
+                    )
+        except Exception as e:
+            log.error(
+                "Error processing device %s: %s",
+                device_info.get('device_id'),
+                str(e),
+                exc_info=True
+            )
+
+    if entities:
+        async_add_entities(entities, True)
+        log.info(
+            "Successfully created %d entities for platform %s",
+            len(entities),
+            platform_type
+        )
+
+async def _create_entity(
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    device_entry: dr.DeviceEntry,
+    entity_info: dict,
+    description_class: EntityDescription,
+    entity_class: Entity,
+    is_supported: bool,
+    log: logging.Logger
+) -> Entity:
+    """创建单个实体。
+    
+    Args:
+        hass: Home Assistant 实例
+        entry: 配置入口
+        device_entry: 设备入口
+        entity_info: 实体信息
+        description_class: 实体描述类
+        entity_class: 实体类
+        is_supported: 是否支持新版本
+        log: 日志记录器
+    
+    Returns:
+        创建的实体实例
+    """
+    entity_id = entity_info.get('id')
+    if not entity_id:
+        raise ValueError("Entity ID not found in entity info")
+
+    # 创建实体描述
+    description = description_class(
+        key=entity_id,
+        force_update=True,
+        icon=entity_info.get('icon'),
+        has_entity_name=True,
+        name=entity_info.get('name'),
+        unit_of_measurement=entity_info.get('unit_of_measurement'),
+    )
+
+    # 创建设备信息
+    device_info = dr.DeviceInfo(
+        identifiers=device_entry.identifiers,
+        name=device_entry.name,
+        entry_type=device_entry.entry_type,
+        manufacturer=device_entry.manufacturer,
+        model=device_entry.model,
+        sw_version=device_entry.sw_version,
+        hw_version=device_entry.hw_version,
+        via_device_id=device_entry.via_device_id,
+        configuration_url=device_entry.configuration_url,
+    )
+
+    # 创建实体 - 只传递 WgiEntity 实际使用的参数
+    return entity_class(
+        entity_id=entity_id,
+        device_info=device_info,
+        entity_description=description,
+        state=entity_info.get('state')
+    )
 
 class WgiEntity(Entity):
     """ Entity class."""
@@ -271,6 +315,14 @@ class WgiEntity(Entity):
 
         if "entity_id" in values:
             self.entity_id = values["entity_id"]
+
+        # 从 entity_description 提取常用属性到 _values
+        if "entity_description" in values and values["entity_description"]:
+            desc = values["entity_description"]
+            if not hasattr(self, '_attr_translation_key') and hasattr(desc, 'translation_key'):
+                self._attr_translation_key = desc.translation_key
+            if not hasattr(self, '_attr_entity_category') and hasattr(desc, 'entity_category'):
+                self._attr_entity_category = desc.entity_category
 
     @property
     def available(self) -> bool:
@@ -371,7 +423,16 @@ class WgiEntity(Entity):
         """Return attribute value."""
         if attr in self._values:
             return self._values[attr]
-        return getattr(super(), attr)
+
+        # 从 entity_description 中获取属性
+        if "entity_description" in self._values and self._values["entity_description"]:
+            desc = self._values["entity_description"]
+            if hasattr(desc, attr):
+                value = getattr(desc, attr)
+                if value is not None:
+                    return value
+
+        return getattr(super(), attr, None)
 
 async def get_version_info_last_from_gitcode() -> str | None:
     try:
@@ -535,7 +596,7 @@ class EntityManage:
     async def update_server(self):
         if self._server_state is None:
             await self.get_update_server_api()
-        is_enable = self._server_state.get('enable',0)
+        is_enable = self._server_state.get('enable',1)
         await self.update_server_state(is_enable)
 
     async def update_server_action(self):
